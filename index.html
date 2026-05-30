@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DevPotes</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
+<style>
+:root {
+  --bg-dark:#0e1117;--bg-dark2:#161b24;--bg-light:#f7f7f5;--bg-white:#fff;
+  --green:#1D9E75;--green-light:#e1f5ee;--green-dark:#178a64;
+  --text:#1a1a18;--text-sub:#6b7280;--text-muted:#9ca3af;
+  --border:#e5e7eb;--border-dark:#232b38;
+  --font:'Figtree',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg-light);color:var(--text);height:100vh;overflow:hidden}
+#ecran-profil{position:fixed;inset:0;z-index:100;background:var(--bg-dark);display:flex;align-items:center;justify-content:center}
+.landing{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.landing-card{background:var(--bg-dark2);border:1px solid var(--border-dark);border-radius:28px;padding:48px;width:440px;text-align:center;animation:slideUp .5s ease}
+.landing-icon{width:64px;height:64px;border-radius:16px;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;margin:0 auto 20px}
+.landing-title{font-size:28px;font-weight:700;color:#fff;margin-bottom:8px}
+.landing-sub{font-size:14px;color:var(--text-muted);margin-bottom:28px;line-height:1.5}
+.landing-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:32px;text-align:left}
+.landing-feat{background:var(--bg-dark);border:1px solid var(--border-dark);border-radius:10px;padding:10px 14px;font-size:13px;color:#d1d5db}
+.landing-btn{width:100%;padding:14px;border-radius:12px;background:var(--green);border:none;color:#fff;font-family:var(--font);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s}
+.landing-btn:hover{background:var(--green-dark);transform:translateY(-2px);box-shadow:0 6px 20px rgba(29,158,117,.3)}
+.setup-card{background:var(--bg-dark2);border:1px solid var(--border-dark);border-radius:24px;padding:28px 32px;width:380px;max-height:95vh;overflow-y:auto;animation:slideUp .4s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.setup-logo{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.setup-logo-icon{width:32px;height:32px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;color:#fff}
+.setup-logo-name{font-size:16px;font-weight:700;color:#fff}
+.setup-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+.setup-sub{font-size:12px;color:var(--text-muted);margin-bottom:14px}
+.setup-label{font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:.04em;margin-bottom:4px}
+.setup-input{width:100%;padding:8px 12px;background:var(--bg-dark);border:1px solid var(--border-dark);border-radius:8px;font-family:var(--font);font-size:13px;color:#fff;outline:none;transition:border-color .15s;margin-bottom:10px}
+.setup-input:focus{border-color:var(--green)}
+.setup-input::placeholder{color:var(--text-muted)}
+.pw-wrap{position:relative}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;line-height:1;user-select:none;opacity:.6}
+.pw-toggle:hover{opacity:1}
+.pp-input-wrap{position:relative}
+.pp-input-wrap .pw-toggle{right:12px;top:28px}
+.couleurs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.couleur-btn{width:30px;height:30px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s}
+.couleur-btn:hover{transform:scale(1.15)}
+.couleur-btn.choisie{border-color:#fff;transform:scale(1.15)}
+.competences{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.comp-btn{padding:3px 10px;border-radius:99px;border:1px solid var(--border-dark);background:transparent;font-family:var(--font);font-size:11px;color:var(--text-muted);cursor:pointer;transition:all .15s}
+.comp-btn.choisie{background:var(--green);border-color:var(--green);color:#fff;font-weight:500}
+.setup-btn{width:100%;padding:10px;border-radius:8px;background:var(--green);border:none;color:#fff;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.setup-btn:hover{background:var(--green-dark)}
+.setup-toggle{text-align:center;margin-top:10px;font-size:12px;color:var(--text-muted)}
+.setup-toggle a{color:var(--green);cursor:pointer;text-decoration:none;font-weight:600}
+.setup-toggle a:hover{text-decoration:underline}
+.setup-error{color:#f87171;font-size:12px;text-align:center;margin-top:8px;display:none}
+.auth-tab{display:flex;margin-bottom:12px;border-radius:6px;overflow:hidden;border:1px solid var(--border-dark)}
+.auth-tab div{flex:1;padding:6px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;color:var(--text-muted);background:var(--bg-dark)}
+.auth-tab div.actif{color:#fff;background:var(--green)}
+.setup-fields{display:block}
+.setup-fields.login-only{display:none}
+.setup-fields.register-only{display:block}
+.auth-mode-register .setup-fields.login-only{display:none}
+.auth-mode-login .setup-fields.login-only{display:block}
+.auth-mode-login .setup-fields.register-only{display:none}
+#appli{display:none;height:100vh;flex-direction:row}
+#appli.visible{display:flex}
+.sidebar{width:220px;background:var(--bg-dark);display:flex;flex-direction:column;flex-shrink:0;border-right:1px solid var(--border-dark)}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:18px 16px 14px;border-bottom:1px solid var(--border-dark)}
+.sb-logo-icon{width:32px;height:32px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;color:#fff}
+.sb-logo-name{font-size:16px;font-weight:700;color:#fff}.sb-online-count{margin-left:auto;font-size:11px;color:#22c55e;font-weight:500}
+.sb-section{padding:14px 16px 6px;font-size:10px;font-weight:700;color:#4b5563;letter-spacing:.08em;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:0 6px 1px;border-radius:8px;cursor:pointer;font-size:13px;color:#9ca3af;transition:all .12s}
+.sb-item:hover{background:var(--border-dark);color:#fff}
+.sb-item.actif{background:#1a2332;color:#fff;font-weight:500}
+.sb-profil{margin-top:auto;padding:12px 14px;border-top:1px solid var(--border-dark);display:flex;align-items:center;gap:10px;cursor:pointer}
+.sb-profil:hover{background:var(--border-dark);border-radius:10px}
+.sb-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-profil-info{flex:1;overflow:hidden}
+.sb-profil-nom{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-profil-statut{font-size:11px;color:var(--text-muted)}
+.sb-online-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:52px;background:var(--bg-white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.topbar-nom{font-size:14px;font-weight:600}
+.topbar-sep{width:1px;height:18px;background:var(--border)}
+.topbar-desc{font-size:12px;color:var(--text-sub)}
+.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.topbar-btn{padding:5px 13px;border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--font);font-size:12px;color:var(--text-sub);cursor:pointer;transition:all .12s}
+.topbar-btn:hover{background:var(--bg-light)}
+.topbar-btn.code-btn{background:var(--green);color:#fff;border-color:var(--green)}
+.topbar-btn.code-btn:hover{background:var(--green-dark)}
+.messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;background:var(--bg-white)}
+.msg{display:flex;gap:10px;align-items:flex-start;animation:msgIn .2s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+.msg-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;cursor:pointer}
+.msg-body{flex:1;min-width:0}
+.msg-meta{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.msg-nom{font-size:13px;font-weight:600;cursor:pointer}
+.msg-nom:hover{text-decoration:underline}
+.msg-time{font-size:11px;color:var(--text-muted)}
+.msg-texte{font-size:13.5px;line-height:1.55;background:var(--bg-light);padding:9px 13px;border-radius:4px 12px 12px 12px;display:inline-block;max-width:520px}
+.msg-code{border-radius:8px;margin-top:6px;display:block;max-width:480px;overflow-x:auto}
+.msg-code pre{font-family:var(--mono);font-size:12px;background:#0e1117;color:#a8ff78;padding:10px 14px;border-radius:8px;margin:0}
+.msg-img{max-width:280px;border-radius:8px;display:block;cursor:pointer}
+.msg-file{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg-light);border-radius:8px;text-decoration:none;color:var(--text);font-size:12px}
+.msg-reactions{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.msg-reaction{padding:2px 6px;border-radius:99px;border:1px solid var(--border);font-size:11px;cursor:pointer;background:transparent;transition:all .12s}
+.msg-reaction:hover{background:var(--green-light);border-color:var(--green)}
+.msg-reaction.mine{background:var(--green-light);border-color:var(--green)}
+.reaction-picker{display:none;gap:2px;margin-top:4px}
+.reaction-picker.visible{display:flex}
+.react-btn{cursor:pointer;font-size:14px;padding:2px;border-radius:4px;transition:transform .12s}
+.react-btn:hover{transform:scale(1.3)}
+.msg.moi{flex-direction:row-reverse}
+.msg.moi .msg-body{display:flex;flex-direction:column;align-items:flex-end}
+.msg.moi .msg-texte{background:var(--green);color:#fff;border-radius:12px 4px 12px 12px}
+.msg.moi .msg-meta{flex-direction:row-reverse}
+.msg.moi .msg-code pre{background:#0a0e14}
+.date-sep{display:flex;align-items:center;gap:12px;font-size:11px;color:var(--text-muted);font-weight:500}
+.date-sep::before,.date-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+.typing-indicator{font-size:11px;color:var(--text-muted);padding:4px 20px;min-height:20px;transition:opacity .2s}
+.saisie{padding:12px 20px;background:var(--bg-white);border-top:1px solid var(--border)}
+.saisie-row{display:flex;gap:10px;align-items:center}
+.saisie-input{flex:1;padding:10px 16px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-light);font-family:var(--font);font-size:13.5px;outline:none;transition:border-color .15s}
+.saisie-input:focus{border-color:var(--green);background:#fff}
+.saisie-input::placeholder{color:var(--text-muted)}
+.saisie-send{padding:10px 20px;border-radius:10px;border:none;background:var(--green);color:#fff;font-family:var(--font);font-size:13.5px;font-weight:600;cursor:pointer;transition:background .15s}
+.saisie-send:hover{background:var(--green-dark)}
+.upload-btn{background:none;border:none;font-size:17px;cursor:pointer;padding:6px 5px;border-radius:8px;transition:background .15s;line-height:1;flex-shrink:0}
+.upload-btn:hover{background:var(--bg-light)}
+#file-preview{display:none;align-items:center;gap:8px;padding:2px 0 6px;font-size:12px;color:var(--text-sub)}
+#file-preview.on{display:flex}
+#file-preview img{width:28px;height:28px;border-radius:4px;object-fit:cover}
+.fp-remove{cursor:pointer;color:var(--text-muted);margin-left:auto;font-size:14px}
+.fp-remove:hover{color:#ef4444}
+.code-input-area{display:none;padding:8px 0}
+.code-input-area.visible{display:block}
+.code-input-area textarea{width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid var(--border);background:#0e1117;color:#a8ff78;font-family:var(--mono);font-size:12px;min-height:80px;outline:none;resize:vertical}
+.code-input-area textarea:focus{border-color:var(--green)}
+.code-input-area .code-hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+.code-lang{padding:10px 14px;background:#0e1117;border-radius:8px 8px 0 0;border-bottom:1px solid #232b38;display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.code-lang-btn{padding:2px 8px;border-radius:4px;border:1px solid #232b38;background:transparent;color:var(--text-muted);font-family:var(--mono);font-size:10px;cursor:pointer}
+.code-lang-btn.actif{background:var(--green);border-color:var(--green);color:#fff}
+.code-copy{position:absolute;top:6px;right:6px;padding:2px 8px;border-radius:4px;border:none;background:#232b38;color:var(--text-muted);font-size:10px;cursor:pointer;opacity:0;transition:opacity .15s}
+.code-wrap{position:relative;display:inline-block;max-width:480px}
+.code-wrap:hover .code-copy{opacity:1}
+.panneau-droit{width:240px;background:var(--bg-white);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.pd-section{padding:14px 14px 6px;font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase}
+.pd-membre{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer}
+.pd-membre:hover{background:var(--bg-light)}
+.pd-membre-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.pd-membre-info{flex:1}
+.pd-membre-nom{font-size:12px;font-weight:500}
+.pd-membre-comp{font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-online{width:6px;height:6px;border-radius:50%;background:#22c55e;flex-shrink:0}
+.pd-item{padding:10px 14px;border-bottom:1px solid var(--border)}
+.pd-tag{font-size:10px;padding:2px 8px;border-radius:99px;display:inline-block;margin-bottom:4px;font-weight:500}
+.tag-deadline{background:#fee2e2;color:#991b1b}
+.tag-event{background:var(--green-light);color:#065f46}
+.tag-ressource{background:#ede9fe;color:#4c1d95}
+.pd-item-text{font-size:12px;line-height:1.4}
+.pd-item-date{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+.kanban-section{padding:14px;border-bottom:1px solid var(--border)}
+.kanban-section .pd-section{padding:0 0 8px}
+.kanban-add{display:flex;gap:6px;margin-bottom:10px}
+.kanban-add input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-size:12px;outline:none}
+.kanban-add input:focus{border-color:var(--green)}
+.kanban-add button{padding:6px 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:12px;cursor:pointer}
+.kanban-cols{display:flex;gap:8px}
+.kanban-col{flex:1;background:var(--bg-light);border-radius:8px;padding:6px}
+.kanban-col-title{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;text-align:center;margin-bottom:4px}
+.kanban-item{background:#fff;border-radius:6px;padding:6px 8px;margin-bottom:4px;font-size:11px;cursor:pointer;border:1px solid var(--border);transition:all .12s}
+.kanban-item:hover{border-color:var(--green)}
+.kanban-item .ki-titre{font-weight:500}
+.kanban-item .ki-del{float:right;cursor:pointer;color:var(--text-muted);font-size:12px}
+.kanban-item .ki-del:hover{color:#ef4444}
+
+.challenge-card{padding:14px;border-bottom:1px solid var(--border)}
+.challenge-card .ch-titre{font-size:13px;font-weight:600;margin-bottom:4px}
+.challenge-card .ch-meta{font-size:11px;color:var(--text-muted);margin-bottom:6px;display:flex;gap:10px}
+.challenge-card .ch-desc{font-size:12px;line-height:1.5;margin-bottom:8px}
+.challenge-card .ch-submit{display:flex;gap:6px}
+.challenge-card .ch-submit textarea{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-family:var(--mono);font-size:11px;background:#0e1117;color:#a8ff78;min-height:50px;outline:none;resize:vertical}
+.challenge-card .ch-submit button{padding:6px 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:12px;cursor:pointer}
+.challenge-card .ch-subs{font-size:10px;color:var(--text-muted);margin-top:6px}
+
+.poll-card{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px}
+.poll-card .poll-question{font-weight:600;margin-bottom:6px}
+.poll-card .poll-option{margin-bottom:3px}
+.poll-card .poll-option label{cursor:pointer}
+.poll-card .poll-bar{height:6px;border-radius:99px;background:var(--bg-light);margin-top:2px;overflow:hidden}
+.poll-card .poll-bar-inner{height:100%;background:var(--green);border-radius:99px;transition:width .3s}
+
+#modal-profil{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);align-items:center;justify-content:center}
+#modal-profil.visible{display:flex}
+.modal-card{background:#fff;border-radius:20px;padding:30px;width:340px;animation:slideUp .25s ease;position:relative}
+.modal-close{position:absolute;top:14px;right:16px;font-size:18px;cursor:pointer;color:var(--text-muted);background:none;border:none}
+.modal-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;margin-bottom:12px}
+.modal-nom{font-size:18px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text-sub);margin-bottom:14px}
+.modal-section{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;margin-bottom:7px}
+.modal-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.modal-pill{font-size:12px;padding:4px 11px;border-radius:99px;background:var(--bg-light);border:1px solid var(--border);color:var(--text-sub)}
+.modal-stats{display:flex;gap:16px}
+.modal-stat-val{font-size:18px;font-weight:700}
+.modal-stat-lab{font-size:11px;color:var(--text-muted)}
+.page-profil{display:none;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);align-items:center;justify-content:center;overflow-y:auto;padding:20px}
+.page-profil.visible{display:flex}
+.pp-card{background:#fff;border-radius:20px;padding:32px;width:420px;max-width:100%;animation:slideUp .25s ease}
+.pp-header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.pp-av{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0}
+.pp-nom{font-size:20px;font-weight:700}
+.pp-email{font-size:13px;color:var(--text-sub)}
+.pp-date{font-size:11px;color:var(--text-muted);margin-top:2px}
+.pp-section{margin-bottom:16px}
+.pp-section-title{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.pp-stats{display:flex;gap:24px}
+.pp-stat-val{font-size:20px;font-weight:700}
+.pp-stat-lab{font-size:11px;color:var(--text-muted)}
+.pp-pills{display:flex;flex-wrap:wrap;gap:5px}
+.pp-pill{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--bg-light);border:1px solid var(--border);color:var(--text-sub)}
+.pp-label{font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:.04em;margin-bottom:4px;margin-top:8px}
+.pp-input{width:100%;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;font-family:var(--font);outline:none;transition:border-color .15s;margin-bottom:6px}
+.pp-input:focus{border-color:var(--green)}
+.pp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.pp-btn{padding:8px 16px;border-radius:8px;border:none;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .12s}
+.pp-btn-primary{background:var(--green);color:#fff}
+.pp-btn-primary:hover{background:var(--green-dark)}
+.pp-btn-save{background:var(--green);color:#fff}
+.pp-btn-save:hover{background:var(--green-dark)}
+.pp-btn-cancel{background:var(--bg-light);color:var(--text-sub);border:1px solid var(--border)}
+.pp-btn-cancel:hover{background:var(--border)}
+.pp-btn-danger{background:#fee2e2;color:#991b1b;margin-left:auto}
+.pp-btn-danger:hover{background:#fecaca}
+.pp-btn-back{background:transparent;color:var(--text-muted)}
+.pp-btn-back:hover{color:var(--text-sub)}
+.welcome-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200;background:var(--green);color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);animation:welcomeIn .5s ease;pointer-events:none}
+@keyframes welcomeIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes welcomeOut{from{opacity:1}to{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+#call-overlay{display:none;position:fixed;inset:0;z-index:300;background:#0a0e14;flex-direction:column}
+#call-overlay.visible{display:flex}
+#call-videos{flex:1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;padding:16px;overflow-y:auto}
+.call-vid-container{position:relative;border-radius:12px;overflow:hidden;background:#000;min-width:200px;min-height:150px;flex:1;max-width:45%}
+.call-vid-container video{width:100%;height:100%;object-fit:cover;display:block}
+.call-vid-label{position:absolute;bottom:6px;left:8px;font-size:11px;color:#fff;background:rgba(0,0,0,.5);padding:2px 8px;border-radius:4px}
+.call-vid-container.local{max-width:180px;max-height:140px;position:absolute;bottom:80px;right:16px;z-index:10;border:2px solid var(--green);border-radius:10px}
+#call-controls{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 20px;background:var(--bg-dark);border-top:1px solid var(--border-dark)}
+.call-ctrl-btn{width:48px;height:48px;border-radius:50%;border:none;font-size:18px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;background:#232b38;color:#fff}
+.call-ctrl-btn:hover{background:#374151}
+.call-ctrl-btn.danger{background:#ef4444}
+.call-ctrl-btn.danger:hover{background:#dc2626}
+.call-ctrl-btn.muted{background:#ef4444}
+#call-notification{display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:250;background:var(--bg-dark2);border:1px solid var(--border-dark);border-radius:14px;padding:14px 22px;align-items:center;gap:14px;animation:slideUp .3s ease}
+#call-notification.visible{display:flex}
+#call-notification .cn-text{font-size:13px;color:#fff}
+#call-notification .cn-btn{padding:6px 16px;border-radius:8px;border:none;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;background:var(--green);color:#fff}
+#call-notification .cn-btn:hover{background:var(--green-dark)}
+#call-notification .cn-btn.cn-decline{background:#374151}
+#call-notification .cn-btn.cn-decline:hover{background:#ef4444}
+#call-end-banner{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:350;background:var(--bg-dark2);border:1px solid var(--border-dark);border-radius:16px;padding:24px 36px;text-align:center;animation:slideUp .3s ease}
+#call-end-banner.visible{display:block}
+#call-end-banner .ceb-text{font-size:16px;color:#fff;margin-bottom:14px}
+#call-end-banner .ceb-btn{padding:8px 24px;border-radius:8px;border:none;background:var(--green);color:#fff;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:99px}
+</style>
+</head>
+<body>
+
+<div id="ecran-profil">
+  <!-- PAGE D'ACCUEIL -->
+  <div class="landing" id="landing">
+    <div class="landing-card">
+      <div class="landing-icon">&lt;/&gt;</div>
+      <div class="landing-title">Bienvenue sur DevPotes</div>
+      <div class="landing-sub">L'espace de chat des développeurs en herbe 🌟</div>
+      <div class="landing-features">
+        <div class="landing-feat">💬 Chat en temps réel</div>
+        <div class="landing-feat">💻 Partage de code</div>
+        <div class="landing-feat">📋 Tableau Kanban</div>
+        <div class="landing-feat">🏆 Défis quotidiens</div>
+      </div>
+      <button class="landing-btn" id="landing-btn" onclick="showAuth()">C'est parti ! 🚀</button>
+      <div style="margin-top:16px;font-size:11px;color:var(--text-muted)"><a onclick="nouveauDepart()" style="color:var(--text-muted);cursor:pointer;text-decoration:underline">🔄 Nouveau départ</a></div>
+    </div>
+  </div>
+
+  <!-- FORMULAIRE AUTH -->
+  <div class="setup-card" id="auth-card" style="display:none">
+    <div class="setup-logo"><div class="setup-logo-icon">&lt;/&gt;</div><div class="setup-logo-name">DevPotes</div></div>
+
+    <div class="auth-tab">
+      <div class="actif" onclick="setAuthMode('register')">Inscription</div>
+      <div onclick="setAuthMode('login')">Connexion</div>
+    </div>
+
+    <div class="setup-title" id="auth-title">Crée ton compte</div>
+    <div class="setup-sub">Rejoins la communauté des devs 💻</div>
+    <div id="auth-fields" class="auth-mode-register">
+
+      <div class="setup-fields register-only">
+        <div class="setup-label">PSEUDO</div>
+        <input class="setup-input" id="setup-nom" placeholder="Ex: Koffi, Mariama..." maxlength="20"/>
+      </div>
+
+      <div class="setup-fields login-only">
+        <div class="setup-label">EMAIL</div>
+        <input class="setup-input" id="setup-email-login" type="email" placeholder="ton@email.com"/>
+      </div>
+
+      <div class="setup-fields register-only">
+        <div class="setup-label">EMAIL</div>
+        <input class="setup-input" id="setup-email" type="email" placeholder="ton@email.com"/>
+      </div>
+
+      <div class="setup-fields">
+        <div class="setup-label">MOT DE PASSE</div>
+        <div class="pw-wrap"><input class="setup-input" id="setup-password" type="password" placeholder="●●●●●●●●"/><span class="pw-toggle" onclick="togglePw()" id="pw-icon">🙈</span></div>
+      </div>
+
+      <div class="setup-fields register-only">
+        <div class="setup-label">COULEUR DE TON AVATAR</div>
+        <div class="couleurs" id="couleurs"></div>
+      </div>
+
+      <div class="setup-fields register-only">
+        <div class="setup-label">TES COMPÉTENCES</div>
+        <div class="competences" id="comps"></div>
+      </div>
+
+    </div>
+
+    <div class="setup-error" id="setup-error"></div>
+    <button class="setup-btn" onclick="authAction()">C'est parti →</button>
+    <div class="setup-toggle" id="setup-toggle">
+      <span id="toggle-text">Déjà un compte ?</span> <a onclick="setAuthMode('login')">Connecte-toi</a>
+    </div>
+    <div class="setup-toggle"><a onclick="showLanding()">← Retour à l'accueil</a></div>
+  </div>
+</div>
+
+<div id="appli">
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo"><div class="sb-logo-icon">&lt;/&gt;</div><div class="sb-logo-name">DevPotes</div><div class="sb-online-count" id="online-count">● 0</div></div>
+    <div class="sb-section">Boulot</div>
+    <div class="sb-item actif" data-salon="Projets" onclick="changerSalon(this,'Projets')">💻 Projets & cours</div>
+    <div class="sb-item" data-salon="Entraide" onclick="changerSalon(this,'Entraide')">🙋 Entraide</div>
+    <div class="sb-item" data-salon="Ressources" onclick="changerSalon(this,'Ressources')">📚 Ressources</div>
+    <div class="sb-section">Détente</div>
+    <div class="sb-item" data-salon="Detente" onclick="changerSalon(this,'Detente')">😂 Détente & mèmes</div>
+    <div class="sb-item" data-salon="Sorties" onclick="changerSalon(this,'Sorties')">🗓️ Sorties</div>
+    <div class="sb-profil" onclick="ouvrirPageProfil()">
+      <div class="sb-av" id="sb-av">?</div>
+      <div class="sb-profil-info"><div class="sb-profil-nom" id="sb-nom">...</div><div class="sb-profil-statut">En ligne</div></div>
+      <div class="sb-online-dot"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-nom" id="salon-nom">Projets & cours</span>
+      <div class="topbar-sep"></div>
+      <span class="topbar-desc" id="salon-desc">Discussion générale</span>
+      <div class="topbar-actions">
+        <button class="topbar-btn" onclick="toggleKanban()" id="btn-kanban">📋 Kanban</button>
+        <button class="topbar-btn" onclick="toggleChallenge()" id="btn-challenge">🏆 Défi du jour</button>
+        <button class="topbar-btn" onclick="startCall()" id="btn-call">📹 Appel</button>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="date-sep">Connexion au serveur...</div>
+    </div>
+
+    <div id="typing-indicator" class="typing-indicator"></div>
+
+    <div class="saisie">
+      <div id="file-preview"></div>
+      <div class="code-input-area" id="code-area">
+        <div class="code-lang" id="code-langs">
+          <button class="code-lang-btn actif" onclick="choisirLang(this,'Python')">Python</button>
+          <button class="code-lang-btn" onclick="choisirLang(this,'JavaScript')">JavaScript</button>
+          <button class="code-lang-btn" onclick="choisirLang(this,'HTML')">HTML</button>
+          <button class="code-lang-btn" onclick="choisirLang(this,'Java')">Java</button>
+          <button class="code-lang-btn" onclick="choisirLang(this,'C')">C</button>
+        </div>
+        <textarea id="code-textarea" placeholder="Écris ton code ici..."></textarea>
+        <div class="code-hint">Appuie sur Esc pour annuler le code</div>
+      </div>
+      <div class="saisie-row">
+        <button class="upload-btn" onclick="document.getElementById('file-input').click()" title="Joindre un fichier">📎</button>
+        <input type="file" id="file-input" hidden onchange="onFileChoisi(event)"/>
+        <button class="upload-btn" onclick="toggleCodeMode()" title="Ajouter du code" id="btn-code">💻</button>
+        <input class="saisie-input" id="champ" placeholder="Message dans #projets..." onkeydown="onSaisieKey(event)"/>
+        <button class="saisie-send" onclick="envoyerMessage()">Envoyer →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panneau-droit">
+    <div id="panneau-content"></div>
+  </div>
+</div>
+
+<!-- PAGE PROFIL -->
+<div id="page-profil" class="page-profil">
+  <div class="pp-card">
+    <div class="pp-header">
+      <div class="pp-av" id="pp-av"></div>
+      <div class="pp-info">
+        <div class="pp-nom" id="pp-nom"></div>
+        <div class="pp-email" id="pp-email"></div>
+        <div class="pp-date" id="pp-date"></div>
+      </div>
+    </div>
+
+    <div class="pp-section">
+      <div class="pp-section-title">STATISTIQUES</div>
+      <div class="pp-stats">
+        <div class="pp-stat"><div class="pp-stat-val" id="pp-msgs">0</div><div class="pp-stat-lab">messages</div></div>
+        <div class="pp-stat"><div class="pp-stat-val" id="pp-skills">0</div><div class="pp-stat-lab">compétences</div></div>
+        <div class="pp-stat"><div class="pp-stat-val" id="pp-jours">0</div><div class="pp-stat-lab">jours actif</div></div>
+      </div>
+    </div>
+
+    <div class="pp-section" id="pp-view">
+      <div class="pp-section-title">COMPÉTENCES</div>
+      <div class="pp-pills" id="pp-pills"></div>
+    </div>
+
+    <div class="pp-section" id="pp-edit-section" style="display:none">
+      <div class="pp-section-title">MODIFIER LE PROFIL</div>
+      <div class="pp-label">PSEUDO</div>
+      <input class="pp-input" id="edit-nom"/>
+      <div class="pp-label">COULEUR</div>
+      <div class="couleurs" id="edit-couleurs"></div>
+      <div class="pp-label">COMPÉTENCES</div>
+      <div class="competences" id="edit-comps"></div>
+      <div class="pp-label">NOUVEAU MOT DE PASSE (optionnel)</div>
+      <div class="pp-input-wrap"><input class="pp-input" id="edit-password" type="password" placeholder="Laisser vide pour ne pas changer"/><span class="pw-toggle" onclick="togglePwEdit()" id="pw-icon-edit">🙈</span></div>
+    </div>
+
+    <div class="pp-actions">
+      <button class="pp-btn pp-btn-primary" id="pp-btn-edit" onclick="toggleEditProfil()">✏️ Modifier</button>
+      <button class="pp-btn pp-btn-save" id="pp-btn-save" style="display:none" onclick="sauvegarderProfil()">💾 Sauvegarder</button>
+      <button class="pp-btn pp-btn-cancel" id="pp-btn-cancel" style="display:none" onclick="toggleEditProfil()">Annuler</button>
+      <button class="pp-btn pp-btn-danger" onclick="deconnexion()">🚪 Déconnexion</button>
+      <button class="pp-btn pp-btn-back" onclick="fermerProfil()">✕ Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div id="call-notification">
+  <span class="cn-text" id="cn-text">🔴 X a démarré un appel vidéo</span>
+  <button class="cn-btn" onclick="joinCall()">Rejoindre</button>
+  <button class="cn-btn cn-decline" onclick="declineCall()">Ignorer</button>
+</div>
+
+<div id="call-end-banner">
+  <div class="ceb-text">📹 Appel terminé</div>
+  <button class="ceb-btn" onclick="closeEndBanner()">OK</button>
+</div>
+
+<div id="call-overlay">
+  <div id="call-videos">
+    <div class="call-vid-container local" id="call-local-container">
+      <video id="call-local" autoplay playsinline muted></video>
+      <div class="call-vid-label">Moi</div>
+    </div>
+  </div>
+  <div id="call-controls">
+    <button class="call-ctrl-btn" id="call-mic-btn" onclick="toggleMic()" title="Micro">🎤</button>
+    <button class="call-ctrl-btn" id="call-cam-btn" onclick="toggleCam()" title="Caméra">📹</button>
+    <button class="call-ctrl-btn danger" onclick="endCall()" title="Raccrocher">📞</button>
+  </div>
+</div>
+
+<div id="modal-profil" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="modal-card">
+    <button class="modal-close" onclick="document.getElementById('modal-profil').classList.remove('visible')">✕</button>
+    <div class="modal-av" id="modal-av"></div>
+    <div class="modal-nom" id="modal-nom"></div>
+    <div class="modal-sub">Étudiant(e) en informatique</div>
+    <div class="modal-section">COMPÉTENCES</div>
+    <div class="modal-pills" id="modal-pills"></div>
+    <div class="modal-section">STATS</div>
+    <div class="modal-stats">
+      <div><div class="modal-stat-val" id="modal-msgs">0</div><div class="modal-stat-lab">messages</div></div>
+      <div><div class="modal-stat-val" id="modal-comps">0</div><div class="modal-stat-lab">compétences</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const socket = io()
+let monProfil = null, salonActuel = 'Projets', codeLang = 'Python', codeMode = false
+let typingTimer = null, typingTimeout = null
+
+const COULEURS = ['#1D9E75','#7F77DD','#D85A30','#378ADD','#BA7517','#e05c8a','#0ea5e9','#8b5cf6']
+const COMP_OPT = ['HTML/CSS','JavaScript','Python','Java','C','SQL','Git','Algo','Linux','PHP']
+const EMOJIS = ['👍','❤️','🎉','😄','😢','🔥','💡','❓']
+
+let couleurChoisie = COULEURS[0], compsChoisies = []
+
+let authMode = 'register'
+let autoConnect = null
+
+function showAuth() {
+  document.getElementById('landing').style.display = 'none'
+  document.getElementById('auth-card').style.display = 'block'
+}
+
+function showLanding() {
+  document.getElementById('auth-card').style.display = 'none'
+  document.getElementById('landing').style.display = 'flex'
+}
+
+function setAuthMode(mode) {
+  authMode = mode
+  const card = document.getElementById('auth-fields')
+  const tabs = document.querySelectorAll('.auth-tab div')
+  const title = document.getElementById('auth-title')
+  card.className = 'auth-mode-' + mode
+  tabs.forEach((t,i) => t.classList.toggle('actif', (i===0 && mode==='register') || (i===1 && mode==='login')))
+  title.textContent = mode === 'register' ? 'Crée ton compte' : 'Bon retour parmi nous'
+  // Force directe de l'affichage des champs
+  document.querySelectorAll('.setup-fields.login-only').forEach(el => el.style.display = mode === 'login' ? 'block' : 'none')
+  document.querySelectorAll('.setup-fields.register-only').forEach(el => el.style.display = mode === 'register' ? 'block' : 'none')
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('setup-error')
+  el.textContent = msg; el.style.display = 'block'
+}
+
+function initSetup() {
+  document.getElementById('couleurs').innerHTML = COULEURS.map((c,i) =>
+    `<div class="couleur-btn${i===0?' choisie':''}" style="background:${c}" onclick="choisirCouleur(this,'${c}')"></div>`
+  ).join('')
+  document.getElementById('comps').innerHTML = COMP_OPT.map(c =>
+    `<button class="comp-btn" onclick="this.classList.toggle('choisie');compsChoisies=[...document.querySelectorAll('.comp-btn.choisie')].map(b=>b.textContent)">${c}</button>`
+  ).join('')
+}
+
+function choisirCouleur(btn,c){document.querySelectorAll('.couleur-btn').forEach(b=>b.classList.remove('choisie'));btn.classList.add('choisie');couleurChoisie=c}
+function togglePw(){const e=document.getElementById('setup-password');const ic=document.getElementById('pw-icon');if(e.type==='password'){e.type='text';ic.textContent='🙉'}else{e.type='password';ic.textContent='🙈'}}
+function togglePwEdit(){const e=document.getElementById('edit-password');const ic=document.getElementById('pw-icon-edit');if(e.type==='password'){e.type='text';ic.textContent='🙉'}else{e.type='password';ic.textContent='🙈'}}
+
+async function authAction() {
+  document.getElementById('setup-error').style.display = 'none'
+  if (authMode === 'register') {
+    const nom = document.getElementById('setup-nom').value.trim()
+    const email = document.getElementById('setup-email').value.trim()
+    const password = document.getElementById('setup-password').value
+    if (!nom || !email || !password) { showAuthError('Tous les champs sont requis'); return }
+    if (password.length < 4) { showAuthError('Mot de passe trop court (min 4 caractères)'); return }
+    try {
+      const rep = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nom,email,password,couleur:couleurChoisie,comps:compsChoisies})})
+      const data = await rep.json()
+      if (!data.succes) { showAuthError(data.erreur); return }
+      monProfil = { ...data.profil, comps: compsChoisies }
+      localStorage.setItem('devpotes_session', JSON.stringify({email,password}))
+      goApp()
+    } catch(e) { showAuthError('Erreur serveur') }
+  } else {
+    const email = document.getElementById('setup-email-login').value.trim()
+    const password = document.getElementById('setup-password').value
+    if (!email || !password) { showAuthError('Email et mot de passe requis'); return }
+    try {
+      const rep = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})})
+      const data = await rep.json()
+      if (!data.succes) { showAuthError(data.erreur); return }
+      monProfil = data.profil
+      localStorage.setItem('devpotes_session', JSON.stringify({email,password}))
+      goApp()
+    } catch(e) { showAuthError('Erreur serveur') }
+  }
+}
+
+function goApp() {
+  document.getElementById('ecran-profil').style.display = 'none'
+  document.getElementById('appli').classList.add('visible')
+  lancerAppli()
+}
+
+async function lancerAppli() {
+  document.getElementById('sb-av').textContent = monProfil.nom.slice(0,2).toUpperCase()
+  document.getElementById('sb-av').style.background = monProfil.couleur
+  document.getElementById('sb-nom').textContent = monProfil.nom
+  socket.emit('rejoindre-salon', salonActuel)
+
+  const toast = document.createElement('div')
+  toast.className = 'welcome-toast'
+  toast.textContent = 'Bienvenue sur DevPotes ' + monProfil.nom + ' ! 🚀'
+  document.body.appendChild(toast)
+  setTimeout(() => { toast.style.animation = 'welcomeOut .4s ease forwards'; setTimeout(()=>toast.remove(),400) }, 3000)
+
+  await chargerMembres()
+  await chargerMessages()
+  chargerChallenge()
+}
+
+// ── PAGE PROFIL ──
+
+function ouvrirPageProfil() {
+  const p = monProfil
+  document.getElementById('pp-av').textContent = p.nom.slice(0,2).toUpperCase()
+  document.getElementById('pp-av').style.background = p.couleur
+  document.getElementById('pp-nom').textContent = p.nom
+  document.getElementById('pp-email').textContent = p.email || '—'
+  document.getElementById('pp-msgs').textContent = p.msgs || 0
+  document.getElementById('pp-skills').textContent = (p.comps||[]).length
+  const cree = p.cree_le ? Math.floor((Date.now() - new Date(p.cree_le).getTime()) / 86400000) : 0
+  document.getElementById('pp-jours').textContent = cree
+  document.getElementById('pp-date').textContent = 'Membre depuis le ' + (p.cree_le ? new Date(p.cree_le).toLocaleDateString('fr-FR') : '—')
+  document.getElementById('pp-pills').innerHTML = (p.comps||[]).length ? p.comps.map(c=>`<span class="pp-pill">${c}</span>`).join('') : '<span style="font-size:12px;color:var(--text-muted)">Aucune compétence</span>'
+  document.getElementById('page-profil').classList.add('visible')
+  document.getElementById('edit-nom').value = p.nom
+  document.getElementById('edit-password').value = ''
+
+  // Init edit color picker
+  document.getElementById('edit-couleurs').innerHTML = COULEURS.map(c =>
+    `<div class="couleur-btn${c===p.couleur?' choisie':''}" style="background:${c}" onclick="document.querySelectorAll('#edit-couleurs .couleur-btn').forEach(b=>b.classList.remove('choisie'));this.classList.add('choisie');editCouleur='${c}'"></div>`
+  ).join('')
+  editCouleur = p.couleur
+
+  // Init edit comps
+  const ec = document.getElementById('edit-comps')
+  ec.innerHTML = COMP_OPT.map(c =>
+    `<button class="comp-btn${(p.comps||[]).includes(c)?' choisie':''}" onclick="this.classList.toggle('choisie')">${c}</button>`
+  ).join('')
+
+  document.getElementById('pp-view').style.display = 'block'
+  document.getElementById('pp-edit-section').style.display = 'none'
+  document.getElementById('pp-btn-edit').style.display = ''
+  document.getElementById('pp-btn-save').style.display = 'none'
+  document.getElementById('pp-btn-cancel').style.display = 'none'
+}
+
+let editCouleur = ''
+
+function toggleEditProfil() {
+  const view = document.getElementById('pp-view')
+  const edit = document.getElementById('pp-edit-section')
+  const btnEdit = document.getElementById('pp-btn-edit')
+  const btnSave = document.getElementById('pp-btn-save')
+  const btnCancel = document.getElementById('pp-btn-cancel')
+  const v = view.style.display === 'none'
+  view.style.display = v ? 'block' : 'none'
+  edit.style.display = v ? 'none' : 'block'
+  btnEdit.style.display = v ? '' : 'none'
+  btnSave.style.display = v ? 'none' : ''
+  btnCancel.style.display = v ? 'none' : ''
+}
+
+async function sauvegarderProfil() {
+  const nom = document.getElementById('edit-nom').value.trim()
+  const password = document.getElementById('edit-password').value
+  if (!nom) return
+  const comps = [...document.querySelectorAll('#edit-comps .comp-btn.choisie')].map(b=>b.textContent)
+  const body = { email: monProfil.email, nom, couleur: editCouleur, comps }
+  if (password) body.password = password
+  try {
+    const rep = await fetch('/api/profil',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    const data = await rep.json()
+    if (!data.succes) { alert(data.erreur); return }
+    monProfil = data.profil
+    localStorage.setItem('devpotes_session', JSON.stringify({email:monProfil.email, password: password || JSON.parse(localStorage.getItem('devpotes_session')||'{}').password}))
+    document.getElementById('sb-av').textContent = monProfil.nom.slice(0,2).toUpperCase()
+    document.getElementById('sb-av').style.background = monProfil.couleur
+    document.getElementById('sb-nom').textContent = monProfil.nom
+    toggleEditProfil()
+    ouvrirPageProfil()
+    renderPanneau()
+  } catch(e) { alert('Erreur') }
+}
+
+function fermerProfil() {
+  document.getElementById('page-profil').classList.remove('visible')
+}
+
+function deconnexion() {
+  localStorage.removeItem('devpotes_session')
+  location.reload()
+}
+
+async function chargerMembres() {
+  try {
+    const rep = await fetch('/api/membres')
+    const membres = await rep.json()
+    document.getElementById('online-count').textContent = '● ' + membres.length
+    renderPanneau()
+  } catch(e) {}
+}
+
+async function chargerMessages() {
+  try {
+    const rep = await fetch(`/api/messages?salon=${salonActuel}`)
+    const msgs = await rep.json()
+    const zone = document.getElementById('messages')
+    zone.innerHTML = '<div class="date-sep">Messages sauvegardés en base de données</div>'
+    msgs.forEach(m => {
+      if (m.est_poll && m.poll) {
+        afficherPoll(m.poll)
+      } else {
+        afficherMsg(m.auteur,m.couleur,m.texte,m.heure,m.auteur===monProfil?.nom,m.type||'text',m.fichier_url||'',m.fichier_nom||'',m.code||'',m.id||m.cree_le||'',m.reactions||[])
+      }
+    })
+    zone.scrollTop = zone.scrollHeight
+  } catch(e) {
+    document.getElementById('messages').innerHTML = '<div class="date-sep" style="color:#f87171">⚠️ Serveur non connecté</div>'
+  }
+}
+
+function afficherMsg(auteur,couleur,texte,heure,estMoi=false,type='text',fichierUrl='',fichierNom='',code='',msgId='',reactions=[]) {
+  const zone = document.getElementById('messages')
+  const div = document.createElement('div')
+  div.className = 'msg' + (estMoi?' moi':'')
+  div.dataset.msgId = msgId
+  const profil = { nom:auteur, couleur, comps:[], msgs:0 }
+
+  let contenu = ''
+  if (type === 'image') {
+    contenu = `<img src="${fichierUrl}" class="msg-img" onclick="window.open(this.src)" alt="${fichierNom}"/>`
+  } else if (type === 'file') {
+    contenu = `<a href="${fichierUrl}" target="_blank" class="msg-file">📎 ${fichierNom}</a>`
+  } else {
+    contenu = texte
+  }
+
+  const codeBlock = code ? `<div class="code-wrap"><div class="code-lang" style="border-radius:8px 8px 0 0;margin:0"><span class="code-lang-btn actif">${codeLang}</span></div><pre><code class="msg-code" style="border-radius:0 0 8px 8px">${escHtml(code)}</code></pre><button class="code-copy" onclick="copyCode(this)">Copier</button></div>` : ''
+
+  const reactStr = reactions.length ? reactions.reduce((acc,r)=>{const k=acc.find(a=>a.e===r.emoji);if(k)k.c++;else acc.push({e:r.emoji,c:1,m:r.auteur===monProfil?.nom});return acc},[]).map(r=>`<button class="msg-reaction${r.m?' mine':''}" onclick="toggleReaction('${msgId}','${r.e}','${salonActuel}')">${r.e} ${r.c}</button>`).join('') : ''
+
+  const picker = msgId ? EMOJIS.map(e=>`<span class="react-btn" onclick="toggleReaction('${msgId}','${e}','${salonActuel}')">${e}</span>`).join('') : ''
+
+  div.innerHTML = `
+    <div class="msg-av" style="background:${couleur}" onclick='ouvrirProfil(${JSON.stringify(profil)})'>${auteur.slice(0,2).toUpperCase()}</div>
+    <div class="msg-body">
+      <div class="msg-meta">
+        <span class="msg-nom" onclick='ouvrirProfil(${JSON.stringify(profil)})'>${auteur}</span>
+        <span class="msg-time">${heure||''}</span>
+      </div>
+      ${contenu ? `<div class="msg-texte">${contenu}</div>` : ''}
+      ${codeBlock}
+      ${reactStr ? `<div class="msg-reactions">${reactStr}</div>` : ''}
+      <div class="reaction-picker${msgId?'':' invisible'}" id="rp-${msgId}">${picker}</div>
+    </div>
+  `
+  zone.appendChild(div)
+  zone.scrollTop = zone.scrollHeight
+}
+
+function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function copyCode(btn) {
+  const code = btn.parentElement.querySelector('code').textContent
+  navigator.clipboard.writeText(code).then(() => { btn.textContent = 'Copié!'; setTimeout(()=>btn.textContent='Copier',1500) })
+}
+
+// ── REACTIONS ──
+
+async function toggleReaction(msgId,emoji,salon) {
+  try {
+    const rep = await fetch('/api/reactions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message_id:msgId,auteur:monProfil.nom,emoji})})
+    await rep.json()
+    socket.emit('reaction',{salon})
+  } catch(e) {}
+}
+
+// ── TYPING ──
+
+function onSaisieKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); envoyerMessage(); return }
+  if (e.key === 'Escape' && codeMode) { toggleCodeMode(); return }
+
+  if (!typingTimer) {
+    socket.emit('typing',{auteur:monProfil?.nom,salon:salonActuel})
+    typingTimer = setTimeout(()=>{ typingTimer=null },3000)
+  }
+  clearTimeout(typingTimeout)
+  typingTimeout = setTimeout(() => {
+    socket.emit('stop-typing',{auteur:monProfil?.nom,salon:salonActuel})
+    typingTimer = null
+  }, 2000)
+}
+
+socket.on('typing',(data)=>{
+  if (data.auteur !== monProfil?.nom) document.getElementById('typing-indicator').textContent = data.auteur + ' écrit...'
+})
+socket.on('stop-typing',(data)=>{
+  if (data.auteur !== monProfil?.nom) document.getElementById('typing-indicator').textContent = ''
+})
+
+// ── CODE MODE ──
+
+function toggleCodeMode() {
+  codeMode = !codeMode
+  document.getElementById('code-area').classList.toggle('visible', codeMode)
+  document.getElementById('btn-code').style.background = codeMode ? 'var(--green-dark)' : ''
+  if (codeMode) document.getElementById('code-textarea').focus()
+}
+
+function choisirLang(btn, lang) {
+  document.querySelectorAll('.code-lang-btn').forEach(b=>b.classList.remove('actif'))
+  btn.classList.add('actif')
+  codeLang = lang
+}
+
+// ── ENVOYER MESSAGE ──
+
+async function envoyerMessage() {
+  const champ = document.getElementById('champ')
+  const texte = champ.value.trim()
+  const codeText = document.getElementById('code-textarea').value.trim()
+  const fileInput = document.getElementById('file-input')
+  const file = fileInput.files[0]
+
+  if (!texte && !codeText && !file) return
+  if (!monProfil) return
+
+  let msgData = {
+    auteur: monProfil.nom, couleur: monProfil.couleur,
+    texte, salon: salonActuel, type: 'text',
+    code: codeText || null
+  }
+
+  if (file) {
+    const fd = new FormData()
+    fd.append('fichier', file)
+    try {
+      const rep = await fetch('/api/upload',{method:'POST',body:fd})
+      const d = await rep.json()
+      msgData.type = d.type; msgData.fichier_nom = d.fichier_nom; msgData.fichier_url = d.fichier_url
+    } catch(e) { return }
+    annulerFichier()
+  }
+
+  socket.emit('message', msgData)
+  champ.value = ''
+  document.getElementById('code-textarea').value = ''
+  if (codeMode) toggleCodeMode()
+
+  socket.emit('stop-typing',{auteur:monProfil.nom,salon:salonActuel})
+  clearTimeout(typingTimeout); typingTimer = null
+}
+
+socket.on('nouveau-message', (data) => {
+  afficherMsg(data.auteur,data.couleur,data.texte,data.heure,data.auteur===monProfil?.nom,data.type||'text',data.fichier_url||'',data.fichier_nom||'',data.code||'',data.id||'','')
+})
+
+// ── FILE UPLOAD ──
+
+function onFileChoisi(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  const preview = document.getElementById('file-preview')
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader()
+    reader.onload = (ev) => { preview.innerHTML = `<img src="${ev.target.result}"/><span>${file.name}</span><span class="fp-remove" onclick="annulerFichier()">✕</span>`; preview.classList.add('on') }
+    reader.readAsDataURL(file)
+  } else {
+    preview.innerHTML = `<span>📎</span><span>${file.name} (${(file.size/1024).toFixed(1)} Ko)</span><span class="fp-remove" onclick="annulerFichier()">✕</span>`
+    preview.classList.add('on')
+  }
+}
+
+function annulerFichier() {
+  document.getElementById('file-input').value = ''
+  document.getElementById('file-preview').classList.remove('on')
+  document.getElementById('file-preview').innerHTML = ''
+}
+
+// ── SALONS ──
+
+function changerSalon(el, key) {
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('actif'))
+  el.classList.add('actif')
+  salonActuel = key
+  document.getElementById('salon-nom').textContent = el.textContent.trim()
+  document.getElementById('champ').placeholder = `Message dans #${key.toLowerCase()}...`
+  socket.emit('rejoindre-salon', key)
+  document.getElementById('messages').innerHTML = '<div class="date-sep">Chargement...</div>'
+  chargerMessages()
+}
+
+// ── PROFIL MODAL ──
+
+function ouvrirProfil(m) {
+  if (!m) return
+  document.getElementById('modal-av').textContent = m.nom.slice(0,2).toUpperCase()
+  document.getElementById('modal-av').style.background = m.couleur
+  document.getElementById('modal-nom').textContent = m.nom
+  document.getElementById('modal-msgs').textContent = m.msgs||0
+  document.getElementById('modal-comps').textContent = (m.comps||[]).length
+  document.getElementById('modal-pills').innerHTML = (m.comps||[]).length ? m.comps.map(c=>`<span class="modal-pill">${c}</span>`).join('') : '<span style="font-size:12px;color:var(--text-muted)">Aucune compétence</span>'
+  document.getElementById('modal-profil').classList.add('visible')
+}
+
+// ── POLLS ──
+
+socket.on('nouveau-poll', (poll) => {
+  afficherPoll(poll)
+})
+
+socket.on('poll-vote', (data) => {
+  const bars = document.querySelectorAll(`[data-poll-id="${data.poll_id}"] .poll-bar-inner`)
+  if (bars.length) document.querySelectorAll(`[data-poll-id="${data.poll_id}"] input`).forEach((r,i)=>{const total=Object.keys(data.votes).length;r.nextElementSibling.textContent = `${Object.values(data.votes).filter(v=>v===i).length} vote(s) (${total?Math.round(Object.values(data.votes).filter(v=>v===i).length/total*100):0}%)`; if(bars[i])bars[i].style.width=total?Math.round(Object.values(data.votes).filter(v=>v===i).length/total*100)+'%':'0%'})
+})
+
+function afficherPoll(poll) {
+  const zone = document.getElementById('messages')
+  const div = document.createElement('div')
+  div.className = 'msg'
+  div.dataset.pollId = poll.id
+  const votes = poll.votes || {}
+  const total = Object.keys(votes).length
+  let optionsHtml = poll.options.map((opt,i) => {
+    const count = Object.values(votes).filter(v=>v===i).length
+    const pct = total ? Math.round(count/total*100) : 0
+    return `<div class="poll-option"><label><input type="radio" name="poll-${poll.id}" value="${i}" onchange="voterPoll(${poll.id},${i})"/> ${opt}</label> — <span>${count} vote(s) (${pct}%)</span><div class="poll-bar"><div class="poll-bar-inner" style="width:${pct}%"></div></div></div>`
+  }).join('')
+  div.innerHTML = `<div class="msg-av" style="background:#1D9E75">📊</div><div class="msg-body"><div class="msg-meta"><span class="msg-nom">Sondage</span></div><div class="poll-card" style="padding:0"><div class="poll-question">${poll.question}</div>${optionsHtml}</div></div>`
+  zone.appendChild(div)
+  zone.scrollTop = zone.scrollHeight
+}
+
+async function voterPoll(pollId, idx) {
+  await fetch('/api/polls/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({poll_id:pollId,auteur:monProfil.nom,option_index:idx})})
+}
+
+// ── CHALLENGES ──
+
+let challengeVisible = false
+
+function toggleChallenge() {
+  challengeVisible = !challengeVisible
+  renderPanneau()
+  document.getElementById('btn-challenge').style.background = challengeVisible ? 'var(--green-dark)' : ''
+}
+
+async function chargerChallenge() {
+  try {
+    const rep = await fetch('/api/challenges/aujourdhui')
+    window.challengeData = await rep.json()
+    if (challengeVisible) renderPanneau()
+  } catch(e) {}
+}
+
+async function soumettreChallenge() {
+  const ta = document.getElementById('ch-code')
+  if (!ta || !ta.value.trim()) return
+  await fetch('/api/challenges/soumettre',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge_id:window.challengeData?.id,auteur:monProfil.nom,code:ta.value.trim()})})
+  ta.value = ''
+  chargerChallenge()
+}
+
+socket.on('challenge-soumission', () => { chargerChallenge() })
+
+// ── KANBAN ──
+
+let kanbanVisible = false
+
+function toggleKanban() {
+  kanbanVisible = !kanbanVisible
+  renderPanneau()
+  document.getElementById('btn-kanban').style.background = kanbanVisible ? 'var(--green-dark)' : ''
+}
+
+async function addKanban() {
+  const inp = document.getElementById('kb-input')
+  if (!inp || !inp.value.trim()) return
+  await fetch('/api/kanban',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({salon:salonActuel,titre:inp.value.trim(),description:'',auteur:monProfil.nom})})
+  inp.value = ''
+  renderPanneau()
+}
+
+async function moveKanban(id, statut) {
+  await fetch(`/api/kanban/${id}?salon=${salonActuel}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({statut})})
+  renderPanneau()
+}
+
+async function delKanban(id) {
+  await fetch(`/api/kanban/${id}?salon=${salonActuel}`,{method:'DELETE'})
+  renderPanneau()
+}
+
+socket.on('kanban-update', () => { if (kanbanVisible) renderPanneau() })
+socket.on('kanban-delete', () => { if (kanbanVisible) renderPanneau() })
+
+// ── PANEL RENDU ──
+
+async function renderPanneau() {
+  const zone = document.getElementById('panneau-content')
+  let html = '<div class="pd-section">Membres en ligne</div><div id="liste-membres">'
+
+  try {
+    const rep = await fetch('/api/membres')
+    const membres = await rep.json()
+    membres.forEach(m => {
+      html += `<div class="pd-membre" onclick='ouvrirProfil(${JSON.stringify(m)})'>
+        <div class="pd-membre-av" style="background:${m.couleur}">${m.nom.slice(0,2).toUpperCase()}</div>
+        <div class="pd-membre-info"><div class="pd-membre-nom">${m.nom}${m.nom===monProfil?.nom?' (moi)':''}</div><div class="pd-membre-comp">${(m.comps||[]).join(', ')||'—'}</div></div>
+        <div class="pd-online"></div>
+      </div>`
+    })
+  } catch(e) {}
+  html += '</div>'
+
+  if (challengeVisible && window.challengeData) {
+    const c = window.challengeData
+    html += `<div class="challenge-card">
+      <div class="ch-titre">🏆 ${c.titre}</div>
+      <div class="ch-meta"><span>${c.langage}</span><span>${c.niveau}</span></div>
+      <div class="ch-desc">${c.description}</div>
+      <div class="ch-submit"><textarea id="ch-code" placeholder="Ta solution..."></textarea><button onclick="soumettreChallenge()">Envoyer</button></div>
+      <div class="ch-subs">${c.submissions ? c.submissions.length : 0} soumission(s)</div>
+    </div>`
+  }
+
+  if (kanbanVisible) {
+    try {
+      const rep = await fetch(`/api/kanban?salon=${salonActuel}`)
+      const items = await rep.json()
+      html += `<div class="kanban-section">
+        <div class="pd-section">📋 Kanban</div>
+        <div class="kanban-add"><input id="kb-input" placeholder="Nouvelle tâche..." onkeydown="if(event.key==='Enter')addKanban()"/><button onclick="addKanban()">+</button></div>
+        <div class="kanban-cols">
+          ${['todo','in_progress','done'].map(s => {
+            const label = {todo:'À faire',in_progress:'En cours',done:'Fait'}[s]
+            const colItems = items.filter(i=>i.statut===s)
+            return `<div class="kanban-col"><div class="kanban-col-title">${label}</div>${colItems.map(i=>`<div class="kanban-item" onclick="moveKanban(${i.id},'${s==='todo'?'in_progress':s==='in_progress'?'done':'todo'}')"><span class="ki-titre">${i.titre}</span><span class="ki-del" onclick="event.stopPropagation();delKanban(${i.id})">✕</span></div>`).join('')}</div>`
+          }).join('')}
+        </div>
+      </div>`
+    } catch(e) {}
+  }
+
+  html += '<div class="pd-section" style="margin-top:10px">À ne pas rater</div>'
+  html += '<div class="pd-item"><div class="pd-tag tag-deadline">Deadline</div><div class="pd-item-text">TP Algo — rendu</div><div class="pd-item-date">Bientôt</div></div>'
+  html += '<div class="pd-item"><div class="pd-tag tag-event">Sortie</div><div class="pd-item-text">Hackathon DevPotes</div><div class="pd-item-date">Samedi</div></div>'
+
+  zone.innerHTML = html
+}
+
+// ── POLL COMMAND ──
+
+const origEnvoyer = envoyerMessage
+envoyerMessage = async function() {
+  const champ = document.getElementById('champ')
+  const texte = champ.value.trim()
+
+  if (texte.startsWith('/poll ')) {
+    const parts = texte.match(/"([^"]+)"/g)
+    if (parts && parts.length >= 3) {
+      const question = parts[0].replace(/"/g,'')
+      const options = parts.slice(1).map(p=>p.replace(/"/g,''))
+      await fetch('/api/polls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({auteur:monProfil.nom,question,options,salon:salonActuel})})
+      champ.value = ''
+      return
+    }
+  }
+
+  await origEnvoyer.call(this)
+}
+
+// ── APPEL VIDÉO ──
+
+let inCall = false, callPeers = {}, localStream = null, mySocketId = null
+let callInitiatorSocketId = null, micMuted = false, camOff = false
+let callNotificationActive = false
+
+socket.on('connect', () => { mySocketId = socket.id })
+
+socket.on('call-started', ({ from, name }) => {
+  callInitiatorSocketId = from
+  document.getElementById('cn-text').textContent = `🔴 ${name} a démarré un appel vidéo`
+  document.getElementById('call-notification').classList.add('visible')
+  callNotificationActive = true
+})
+
+socket.on('call-joined', ({ participants }) => {
+  // Ce nouveau joigneur se connecte à chaque participant existant
+  participants.forEach(p => {
+    const peer = new SimplePeer({ initiator: true, stream: localStream, trickle: false })
+    callPeers[p.socketId] = peer
+    peer.on('signal', (signal) => { socket.emit('signal', { to: p.socketId, signal }) })
+    peer.on('stream', (remoteStream) => { addRemoteVideo(p.socketId, p.name, remoteStream) })
+    peer.on('error', () => {})
+    peer.on('close', () => { removeRemoteVideo(p.socketId) })
+  })
+})
+
+socket.on('user-joined', ({ from, name }) => {
+  // Un nouveau a rejoint, on se connecte à lui (si on n'est pas déjà connecté)
+  if (callPeers[from] || from === mySocketId) return
+  const peer = new SimplePeer({ initiator: false, stream: localStream, trickle: false })
+  callPeers[from] = peer
+  peer.on('signal', (signal) => { socket.emit('signal', { to: from, signal }) })
+  peer.on('stream', (remoteStream) => { addRemoteVideo(from, name, remoteStream) })
+  peer.on('error', () => {})
+  peer.on('close', () => { removeRemoteVideo(from) })
+})
+
+socket.on('signal', ({ from, signal }) => {
+  if (callPeers[from]) {
+    callPeers[from].signal(signal)
+  } else {
+    // Nouvelle connexion entrante — quelqu'un veut nous joindre
+    const peer = new SimplePeer({ initiator: false, stream: localStream, trickle: false })
+    callPeers[from] = peer
+    peer.on('signal', (sig) => { socket.emit('signal', { to: from, signal: sig }) })
+    peer.on('stream', (remoteStream) => {
+      fetch('/api/membres').then(r=>r.json()).then(membres => {
+        const m = membres.find(x => x.nom === monProfil?.nom)
+        // On ne peut pas récupérer le nom depuis socketId simplement, on met "Participant"
+        addRemoteVideo(from, 'Participant', remoteStream)
+      }).catch(() => addRemoteVideo(from, 'Participant', remoteStream))
+    })
+    peer.on('error', () => {})
+    peer.on('close', () => { removeRemoteVideo(from) })
+    peer.signal(signal)
+  }
+})
+
+socket.on('call-ended', ({ from }) => {
+  if (from === callInitiatorSocketId || from !== mySocketId) {
+    // Si l'initiateur part ou si c'est nous, fin de l'appel
+    document.getElementById('call-notification').classList.remove('visible')
+    callNotificationActive = false
+    if (inCall) {
+      hangUpCall()
+      document.getElementById('call-end-banner').classList.add('visible')
+    }
+  }
+  // Supprimer le pair spécifique
+  if (callPeers[from]) {
+    callPeers[from].destroy()
+    delete callPeers[from]
+    removeRemoteVideo(from)
+  }
+})
+
+async function startCall() {
+  if (!monProfil) return
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+  } catch (e) {
+    alert('Impossible d\'accéder à la caméra/micro. Vérifie les permissions.')
+    return
+  }
+  inCall = true
+  document.getElementById('call-local').srcObject = localStream
+  document.getElementById('call-overlay').classList.add('visible')
+  socket.emit('start-call', { salon: salonActuel, name: monProfil.nom })
+}
+
+async function joinCall() {
+  document.getElementById('call-notification').classList.remove('visible')
+  callNotificationActive = false
+  if (!monProfil) return
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+  } catch (e) {
+    alert('Impossible d\'accéder à la caméra/micro.')
+    return
+  }
+  inCall = true
+  document.getElementById('call-local').srcObject = localStream
+  document.getElementById('call-overlay').classList.add('visible')
+  socket.emit('join-call', { salon: salonActuel, name: monProfil.nom })
+}
+
+function declineCall() {
+  document.getElementById('call-notification').classList.remove('visible')
+  callNotificationActive = false
+}
+
+function addRemoteVideo(socketId, name, stream) {
+  const container = document.createElement('div')
+  container.className = 'call-vid-container'
+  container.id = 'remote-' + socketId
+  const video = document.createElement('video')
+  video.autoplay = true
+  video.playsinline = true
+  video.srcObject = stream
+  const label = document.createElement('div')
+  label.className = 'call-vid-label'
+  label.textContent = name
+  container.appendChild(video)
+  container.appendChild(label)
+  document.getElementById('call-videos').appendChild(container)
+}
+
+function removeRemoteVideo(socketId) {
+  const el = document.getElementById('remote-' + socketId)
+  if (el) el.remove()
+}
+
+function toggleMic() {
+  if (!localStream) return
+  micMuted = !micMuted
+  localStream.getAudioTracks().forEach(t => { t.enabled = !micMuted })
+  document.getElementById('call-mic-btn').classList.toggle('muted', micMuted)
+  document.getElementById('call-mic-btn').textContent = micMuted ? '🔇' : '🎤'
+}
+
+function toggleCam() {
+  if (!localStream) return
+  camOff = !camOff
+  localStream.getVideoTracks().forEach(t => { t.enabled = !camOff })
+  document.getElementById('call-cam-btn').classList.toggle('muted', camOff)
+  document.getElementById('call-cam-btn').textContent = camOff ? '🚫' : '📹'
+}
+
+function hangUpCall() {
+  inCall = false
+  document.getElementById('call-overlay').classList.remove('visible')
+  socket.emit('end-call', { salon: salonActuel })
+  Object.values(callPeers).forEach(p => p.destroy())
+  callPeers = {}
+  if (localStream) {
+    localStream.getTracks().forEach(t => t.stop())
+    localStream = null
+  }
+  document.getElementById('call-local').srcObject = null
+  document.querySelectorAll('.call-vid-container[id^="remote-"]').forEach(el => el.remove())
+  document.getElementById('call-mic-btn').classList.remove('muted')
+  document.getElementById('call-mic-btn').textContent = '🎤'
+  document.getElementById('call-cam-btn').classList.remove('muted')
+  document.getElementById('call-cam-btn').textContent = '📹'
+  micMuted = false; camOff = false
+}
+
+function endCall() {
+  hangUpCall()
+}
+
+function closeEndBanner() {
+  document.getElementById('call-end-banner').classList.remove('visible')
+}
+
+function nouveauDepart() {
+  localStorage.removeItem('devpotes_session')
+  location.reload()
+}
+
+// ── START ──
+
+window.addEventListener('load', async () => {
+  initSetup()
+  const session = JSON.parse(localStorage.getItem('devpotes_session') || 'null')
+  if (session && session.email && session.password) {
+    try {
+      const rep = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:session.email,password:session.password})})
+      const data = await rep.json()
+      if (data.succes) {
+        monProfil = data.profil
+        document.getElementById('landing-btn').textContent = 'Continuer en tant que ' + monProfil.nom + ' →'
+        document.getElementById('landing-btn').onclick = () => {
+          document.getElementById('ecran-profil').style.display = 'none'
+          document.getElementById('appli').classList.add('visible')
+          lancerAppli()
+        }
+        return
+      }
+    } catch(e) {}
+    localStorage.removeItem('devpotes_session')
+  }
+})
+</script>
+</body>
+</html>

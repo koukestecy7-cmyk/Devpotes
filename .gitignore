@@ -1,0 +1,4 @@
+node_modules/
+devpotes.db
+uploads/*
+!uploads/.gitkeep
