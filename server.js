@@ -122,9 +122,7 @@ async function initDb() {
 
   const nb = dbGet('SELECT COUNT(*) as n FROM messages')
   if (!nb || nb.n === 0) {
-    dbRun('INSERT INTO messages (auteur,couleur,texte,salon) VALUES (?,?,?,?)', ['Mariama','#7F77DD','Bienvenue sur DevPotes ! 👋','Projets'])
-    dbRun('INSERT INTO messages (auteur,couleur,texte,salon) VALUES (?,?,?,?)', ['Koffi','#D85A30',"Quelqu'un a fait l'exo sur les arbres binaires ?",'Projets'])
-    dbRun('INSERT INTO messages (auteur,couleur,texte,salon) VALUES (?,?,?,?)', ['Jean-Luc','#378ADD','Je regarde ça ce soir !','Projets'])
+    dbRun('INSERT INTO messages (auteur,couleur,texte,salon) VALUES (?,?,?,?)', ['DevPotes','#1D9E75','Bienvenue sur DevPotes ! Crée ton compte et commence à discuter 🚀','Projets'])
   }
 
   const nc = dbGet('SELECT COUNT(*) as n FROM challenges')
