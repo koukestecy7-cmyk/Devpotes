@@ -3,30 +3,75 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>DevPotes</title>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<title>DevPotes — L'espace des devs en herbe</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@400;500;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
 <style>
 :root {
-  --bg-dark:#0e1117;--bg-dark2:#161b24;--bg-light:#f7f7f5;--bg-white:#fff;
-  --green:#1D9E75;--green-light:#e1f5ee;--green-dark:#178a64;
-  --text:#1a1a18;--text-sub:#6b7280;--text-muted:#9ca3af;
-  --border:#e5e7eb;--border-dark:#232b38;
-  --font:'Figtree',sans-serif;--mono:'JetBrains Mono',monospace;
+  --bg-dark:#080c10;--bg-dark2:#0d1117;--bg-light:#f7f7f5;--bg-white:#fff;
+  --green:#1DB87A;--green-light:#e1f5ee;--green-dark:#178a64;
+  --green-dim:#1DB87A22;--green-border:#1DB87A44;
+  --text:#e6edf3;--text-sub:#6b7280;--text-muted:#6e7681;
+  --border:#21262d;--border-dark:#232b38;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --font-title:'Syne',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:var(--font);background:var(--bg-light);color:var(--text);height:100vh;overflow:hidden}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+body{background:var(--bg-light);color:var(--text)}
 #ecran-profil{position:fixed;inset:0;z-index:100;background:var(--bg-dark);display:flex;align-items:center;justify-content:center}
-.landing{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-.landing-card{background:var(--bg-dark2);border:1px solid var(--border-dark);border-radius:28px;padding:48px;width:440px;text-align:center;animation:slideUp .5s ease}
-.landing-icon{width:64px;height:64px;border-radius:16px;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;margin:0 auto 20px}
-.landing-title{font-size:28px;font-weight:700;color:#fff;margin-bottom:8px}
-.landing-sub{font-size:14px;color:var(--text-muted);margin-bottom:28px;line-height:1.5}
-.landing-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:32px;text-align:left}
-.landing-feat{background:var(--bg-dark);border:1px solid var(--border-dark);border-radius:10px;padding:10px 14px;font-size:13px;color:#d1d5db}
-.landing-btn{width:100%;padding:14px;border-radius:12px;background:var(--green);border:none;color:#fff;font-family:var(--font);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s}
-.landing-btn:hover{background:var(--green-dark);transform:translateY(-2px);box-shadow:0 6px 20px rgba(29,158,117,.3)}
+/* LANDING — Hero */
+#canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;text-align:center}
+.ring{position:absolute;border-radius:50%;border:1px solid var(--green-border);pointer-events:none}
+.ring1{width:500px;height:500px;animation:ring-pulse 4s ease-in-out infinite;opacity:.3}
+.ring2{width:320px;height:320px;animation-delay:1.3s;opacity:.5}
+.ring3{width:160px;height:160px;animation-delay:2.6s;opacity:.4}
+@keyframes ring-pulse{0%,100%{transform:scale(1);opacity:.2}50%{transform:scale(1.05);opacity:.6}}
+.logo{width:84px;height:84px;background:var(--green);border-radius:24px;display:flex;align-items:center;justify-content:center;margin-bottom:2rem;animation:float 5s ease-in-out infinite;cursor:pointer;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.logo:hover{transform:scale(1.15) rotate(-8deg)!important}
+.logo svg{width:42px;height:42px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.badge-live{display:inline-flex;align-items:center;gap:7px;background:var(--green-dim);border:.5px solid var(--green-border);border-radius:99px;padding:5px 14px;font-size:12px;color:var(--green);font-family:var(--font);font-weight:500;margin-bottom:1.5rem;letter-spacing:.03em}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:dot-pulse 1.5s ease-in-out infinite}
+@keyframes dot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(29,184,122,.5)}50%{box-shadow:0 0 0 5px rgba(29,184,122,0)}}
+.hero h1{font-family:var(--font-title);font-weight:800;font-size:clamp(42px,7vw,72px);line-height:1.05;margin-bottom:1rem;letter-spacing:-.02em}
+.hero h1 .highlight{color:var(--green);position:relative;display:inline-block}
+.hero h1 .highlight::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:3px;background:var(--green);transform:scaleX(0);transform-origin:left;animation:underline-reveal .9s .6s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes underline-reveal{to{transform:scaleX(1)}}
+.subtitle{font-size:clamp(15px,2vw,18px);color:var(--muted);line-height:1.7;max-width:440px;margin-bottom:2.5rem;font-weight:300}
+.typing-wrap{display:block;min-height:1.7em}
+#typing{color:var(--green);font-weight:500;border-right:2px solid var(--green);padding-right:2px;animation:caret .75s step-end infinite}
+@keyframes caret{50%{border-color:transparent}}
+.features{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:2.5rem}
+.feat{display:flex;align-items:center;gap:8px;background:var(--bg-dark2);border:.5px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;color:#adbac7;cursor:default;transition:border-color .2s,transform .2s,background .2s}
+.feat:hover{border-color:var(--feat-color,var(--green));background:var(--bg-dark2);transform:translateY(-3px);color:var(--text)}
+.feat svg{width:16px;height:16px;stroke:var(--feat-color,var(--green));fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:2rem}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 36px;border-radius:12px;font-size:15px;font-family:var(--font-title);font-weight:700;cursor:pointer;border:none;transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .15s;letter-spacing:.01em}
+.btn:hover{transform:translateY(-3px)}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--green);color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-secondary{background:var(--bg-dark2);color:var(--text);border:.5px solid var(--border)}
+.btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.members{display:flex;align-items:center;gap:10px}
+.avatars{display:flex}
+.av{width:30px;height:30px;border-radius:50%;border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;font-family:var(--font-title);margin-left:-8px}
+.av:first-child{margin-left:0}
+.members-text{font-size:13px;color:var(--text-muted)}
+.members-text strong{color:var(--green)}
+.scroll-hint{position:absolute;bottom:28px;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.4;animation:scroll-bob 2s ease-in-out infinite}
+.scroll-hint span{font-size:11px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase}
+.scroll-hint svg{width:18px;height:18px;stroke:var(--text-muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@keyframes scroll-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+#toast{position:fixed;bottom:28px;right:28px;background:var(--bg-dark2);border:.5px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:200;max-width:280px;transform:translateX(320px);opacity:0;transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .35s ease;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+#toast.show{transform:translateX(0);opacity:1}
+.toast-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;font-family:var(--font-title);flex-shrink:0}
+.toast-name{font-size:13px;font-weight:500;color:var(--text);display:block}
+.toast-msg{font-size:12px;color:var(--text-muted);display:block;margin-top:1px}
+@media(max-width:500px){.ring1{width:320px;height:320px}.ring2{width:200px;height:200px}.hero h1{font-size:36px}.btns{flex-direction:column;align-items:center}.btn{width:100%;justify-content:center}#toast{right:16px;bottom:16px}}
 .setup-card{background:var(--bg-dark2);border:1px solid var(--border-dark);border-radius:24px;padding:28px 32px;width:380px;max-height:95vh;overflow-y:auto;animation:slideUp .4s ease}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .setup-logo{display:flex;align-items:center;gap:10px;margin-bottom:16px}
@@ -272,19 +317,81 @@ body{font-family:var(--font);background:var(--bg-light);color:var(--text);height
 
 <div id="ecran-profil">
   <!-- PAGE D'ACCUEIL -->
-  <div class="landing" id="landing">
-    <div class="landing-card">
-      <div class="landing-icon">&lt;/&gt;</div>
-      <div class="landing-title">Bienvenue sur DevPotes</div>
-      <div class="landing-sub">L'espace de chat des développeurs en herbe 🌟</div>
-      <div class="landing-features">
-        <div class="landing-feat">💬 Chat en temps réel</div>
-        <div class="landing-feat">💻 Partage de code</div>
-        <div class="landing-feat">📋 Tableau Kanban</div>
-        <div class="landing-feat">🏆 Défis quotidiens</div>
+  <canvas id="canvas"></canvas>
+  <div class="hero" id="landing">
+    <div class="ring ring1"></div>
+    <div class="ring ring2"></div>
+    <div class="ring ring3"></div>
+
+    <div class="logo" id="logo">
+      <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    </div>
+
+    <div class="badge-live">
+      <div class="badge-dot"></div>
+      <span id="liveCount">27</span> devs en ligne
+    </div>
+
+    <h1>Bienvenue sur<br><span class="highlight">DevPotes</span></h1>
+
+    <p class="subtitle">
+      L'espace où les devs en herbe<br>
+      <span class="typing-wrap"><span id="typing"></span></span>
+    </p>
+
+    <div class="features">
+      <div class="feat" style="--feat-color:#1DB87A">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat en temps réel
       </div>
-      <button class="landing-btn" id="landing-btn" onclick="showAuth()">C'est parti ! 🚀</button>
-      <div style="margin-top:16px;font-size:11px;color:var(--text-muted)"><a onclick="nouveauDepart()" style="color:var(--text-muted);cursor:pointer;text-decoration:underline">🔄 Nouveau départ</a></div>
+      <div class="feat" style="--feat-color:#378ADD">
+        <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Partage de code
+      </div>
+      <div class="feat" style="--feat-color:#7F77DD">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Tableau Kanban
+      </div>
+      <div class="feat" style="--feat-color:#EF9F27">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Défis quotidiens
+      </div>
+    </div>
+
+    <div class="btns">
+      <button class="btn btn-primary" onclick="goRegister()">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        S'inscrire
+      </button>
+      <button class="btn btn-secondary" onclick="goLogin()">
+        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Se connecter
+      </button>
+    </div>
+
+    <div class="members">
+      <div class="avatars">
+        <div class="av" style="background:#1D9E75">DV</div>
+        <div class="av" style="background:#378ADD">KO</div>
+        <div class="av" style="background:#7F77DD">MA</div>
+        <div class="av" style="background:#D4537E">JL</div>
+        <div class="av" style="background:#EF9F27">AW</div>
+      </div>
+      <p class="members-text">Rejoins <strong id="memberCount">+120</strong> développeurs</p>
+    </div>
+
+    <div class="scroll-hint">
+      <span>Scroll</span>
+      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast">
+    <div class="toast-av" id="toastAv"></div>
+    <div>
+      <span class="toast-name" id="toastName"></span>
+      <span class="toast-msg" id="toastMsg"></span>
     </div>
   </div>
 
@@ -508,14 +615,21 @@ let couleurChoisie = COULEURS[0], compsChoisies = []
 let authMode = 'register'
 let autoConnect = null
 
-function showAuth() {
+function goRegister() {
+  setAuthMode('register')
+  document.getElementById('landing').style.display = 'none'
+  document.getElementById('auth-card').style.display = 'block'
+}
+
+function goLogin() {
+  setAuthMode('login')
   document.getElementById('landing').style.display = 'none'
   document.getElementById('auth-card').style.display = 'block'
 }
 
 function showLanding() {
   document.getElementById('auth-card').style.display = 'none'
-  document.getElementById('landing').style.display = 'flex'
+  document.getElementById('landing').style.display = ''
 }
 
 function setAuthMode(mode) {
@@ -1248,10 +1362,120 @@ function nouveauDepart() {
   location.reload()
 }
 
+// ── LANDING ANIMATIONS ──
+
+function initLanding() {
+  /* PARTICLES */
+  const canvas = document.getElementById('canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const N = 70;
+  const pts = Array.from({length: N}, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+    r: Math.random() * 1.4 + 0.3, a: Math.random() * 0.5 + 0.1
+  }));
+  let mouse = { x: -999, y: -999 };
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+      const d = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+      const a = d < 100 ? Math.min(0.95, p.a + 0.5) : p.a;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(29,184,122,${a})`; ctx.fill();
+    });
+    pts.forEach((p, i) => {
+      for (let j = i + 1; j < N; j++) {
+        const q = pts[j], d = Math.hypot(p.x - q.x, p.y - q.y);
+        if (d < 100) {
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = `rgba(29,184,122,${0.15 * (1 - d / 100)})`;
+          ctx.lineWidth = 0.5; ctx.stroke();
+        }
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  /* TYPEWRITER */
+  const phrases = [
+    "s'entraident sur les bugs 🐛",
+    "partagent leurs projets 🚀",
+    "relèvent des défis de code 🏆",
+    "apprennent ensemble ✨",
+    "deviennent de vrais devs 💪"
+  ];
+  let pi = 0, ci = 0, deleting = false;
+  const tel = document.getElementById('typing');
+  if (tel) {
+    function type() {
+      const phrase = phrases[pi];
+      if (!deleting) {
+        tel.textContent = phrase.slice(0, ++ci);
+        if (ci === phrase.length) { deleting = true; setTimeout(type, 1600); return; }
+        setTimeout(type, 60);
+      } else {
+        tel.textContent = phrase.slice(0, --ci);
+        if (ci === 0) { deleting = false; pi = (pi + 1) % phrases.length; setTimeout(type, 400); return; }
+        setTimeout(type, 38);
+      }
+    }
+    type();
+  }
+
+  /* LIVE COUNT */
+  let liveN = 27;
+  setInterval(() => {
+    liveN += Math.random() < 0.5 ? 1 : -1;
+    liveN = Math.max(18, Math.min(50, liveN));
+    const lc = document.getElementById('liveCount');
+    if (lc) lc.textContent = liveN;
+  }, 3500);
+
+  /* TOASTS */
+  const toastsData = [
+    { name: 'Koffi', msg: 'vient de rejoindre DevPotes !', color: '#378ADD' },
+    { name: 'Mariama', msg: 'a posté un défi Python 🐍', color: '#1DB87A' },
+    { name: 'Jean-Luc', msg: 'a résolu le défi du jour 🏆', color: '#7F77DD' },
+    { name: 'Stecy', msg: 'partage un snippet React ⚛️', color: '#EF9F27' },
+    { name: 'Awa', msg: 'pose une question sur Git 🤔', color: '#D4537E' },
+  ];
+  const toastEl = document.getElementById('toast');
+  function showToast() {
+    if (!toastEl) return;
+    const t = toastsData[Math.floor(Math.random() * toastsData.length)];
+    document.getElementById('toastAv').textContent = t.name.slice(0, 2).toUpperCase();
+    document.getElementById('toastAv').style.background = t.color;
+    document.getElementById('toastName').textContent = t.name;
+    document.getElementById('toastMsg').textContent = t.msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 3200);
+  }
+  setTimeout(() => { showToast(); setInterval(showToast, 5500); }, 2000);
+
+  /* LOGO CLICK */
+  const logo = document.getElementById('logo');
+  if (logo) {
+    logo.addEventListener('click', () => {
+      logo.style.transform = 'rotate(360deg) scale(1.2)';
+      setTimeout(() => logo.style.transform = '', 500);
+    });
+  }
+}
+
 // ── START ──
 
 window.addEventListener('load', async () => {
   initSetup()
+  initLanding()
   const session = JSON.parse(localStorage.getItem('devpotes_session') || 'null')
   if (session && session.email && session.password) {
     try {
@@ -1259,12 +1483,16 @@ window.addEventListener('load', async () => {
       const data = await rep.json()
       if (data.succes) {
         monProfil = data.profil
-        document.getElementById('landing-btn').textContent = 'Continuer en tant que ' + monProfil.nom + ' →'
-        document.getElementById('landing-btn').onclick = () => {
+        const btn1 = document.querySelector('.btn-primary')
+        const btn2 = document.querySelector('.btn-secondary')
+        btn1.innerHTML = 'Continuer en tant que ' + monProfil.nom + ' →'
+        btn1.onclick = () => {
           document.getElementById('ecran-profil').style.display = 'none'
           document.getElementById('appli').classList.add('visible')
           lancerAppli()
         }
+        btn2.innerHTML = '🚪 Nouveau départ'
+        btn2.onclick = nouveauDepart
         return
       }
     } catch(e) {}
